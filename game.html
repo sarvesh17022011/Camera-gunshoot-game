@@ -1,0 +1,1916 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Target Gesture Game</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+
+    width: 100%;
+    height: 100%;
+
+    overflow: hidden;
+
+    background: #030303;
+
+    color: white;
+
+    font-family: Arial, sans-serif;
+}
+
+/* =========================================
+   TOP BAR
+========================================= */
+
+#topBar {
+
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+
+    height: 70px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding: 0 30px;
+
+    background:
+        rgba(5,5,5,0.96);
+
+    border-bottom:
+        1px solid #222;
+
+    z-index: 5000;
+}
+
+.stat {
+
+    min-width: 120px;
+
+    text-align: center;
+}
+
+.stat-label {
+
+    color: #666;
+
+    font-size: 11px;
+
+    letter-spacing: 2px;
+
+    margin-bottom: 4px;
+}
+
+.stat-value {
+
+    font-size: 22px;
+
+    font-weight: bold;
+
+    color: #00ff88;
+}
+
+#ammoValue {
+
+    color: #ffd43b;
+}
+
+#livesValue {
+
+    color: #ff4d4d;
+}
+
+/* =========================================
+   RELOAD TEXT
+========================================= */
+
+#reloadText {
+
+    position: fixed;
+
+    top: 88px;
+    left: 50%;
+
+    transform:
+        translateX(-50%);
+
+    color: #ffd43b;
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+    letter-spacing: 2px;
+
+    display: none;
+
+    z-index: 6000;
+}
+
+#reloadText.visible {
+
+    display: block;
+}
+
+/* =========================================
+   GAME AREA
+
+   Bottom is now higher because the
+   camera lives inside the bottom bar.
+========================================= */
+
+#gameArea {
+
+    position: fixed;
+
+    top: 70px;
+
+    bottom: 190px;
+
+    left: 0;
+    right: 0;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at center,
+            #101b15,
+            #030303 70%
+        );
+}
+
+/* =========================================
+   TARGET
+========================================= */
+
+.target {
+
+    position: absolute;
+
+    width: 64px;
+    height: 64px;
+
+    border-radius: 50%;
+
+    background: #e52323;
+
+    border:
+        3px solid #ff6060;
+
+    box-shadow:
+        0 0 15px rgba(255,0,0,0.6);
+
+    transform:
+        translate(-50%, -50%);
+
+    cursor: default;
+}
+
+.target::before {
+
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 30px;
+    height: 30px;
+
+    transform:
+        translate(-50%, -50%);
+
+    border:
+        3px solid white;
+
+    border-radius: 50%;
+}
+
+.target::after {
+
+    content: "";
+
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    width: 8px;
+    height: 8px;
+
+    transform:
+        translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: white;
+}
+
+/* =========================================
+   HIT FLASH
+========================================= */
+
+#hitFlash {
+
+    position: fixed;
+
+    left: 0;
+    top: 0;
+
+    width: 100%;
+    height: 100%;
+
+    pointer-events: none;
+
+    background:
+        rgba(255,255,255,0.15);
+
+    opacity: 0;
+
+    z-index: 4000;
+
+    transition:
+        opacity 0.08s;
+}
+
+/* =========================================
+   CROSSHAIR
+========================================= */
+
+#crosshair {
+
+    position: fixed;
+
+    width: 42px;
+    height: 42px;
+
+    border:
+        3px solid #ff3030;
+
+    border-radius: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    pointer-events: none;
+
+    z-index: 99990;
+
+    display: block !important;
+
+    transition:
+        border-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+#crosshair::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 7px;
+    height: 7px;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: #ff3030;
+}
+
+#crosshair.hand-found {
+
+    border-color: #00ff88;
+
+    box-shadow:
+        0 0 8px #00ff88,
+        0 0 18px #00ff88;
+}
+
+#crosshair.hand-found::after {
+
+    background: #00ff88;
+}
+
+#crosshair.hand-lost {
+
+    border-color: #ff3030;
+
+    box-shadow:
+        0 0 8px #ff3030,
+        0 0 18px #ff3030;
+}
+
+#crosshair.hand-lost::after {
+
+    background: #ff3030;
+}
+
+/* =========================================
+   BOTTOM BAR
+
+   Increased from 65px to 190px
+   so camera fits inside it.
+========================================= */
+
+#bottomBar {
+
+    position: fixed;
+
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+
+    height: 190px;
+
+    background:
+        rgba(5,5,5,0.98);
+
+    border-top:
+        1px solid #222;
+
+    z-index: 5000;
+}
+
+/* =========================================
+   ESCAPE BUTTON
+========================================= */
+
+#escapeButton {
+
+    position: absolute;
+
+    left: 25px;
+
+    top: 50%;
+
+    transform:
+        translateY(-50%);
+
+    padding:
+        14px 30px;
+
+    border:
+        2px solid #555;
+
+    border-radius: 8px;
+
+    color: #aaa;
+
+    background: #101010;
+
+    font-size: 14px;
+
+    font-weight: bold;
+
+    letter-spacing: 1px;
+
+    transition: 0.15s;
+}
+
+#escapeButton.hovered {
+
+    color: white;
+
+    border-color: #ff4d4d;
+
+    background: #251010;
+
+    box-shadow:
+        0 0 15px rgba(255,0,0,0.25);
+
+    transform:
+        translateY(-50%)
+        scale(1.04);
+}
+
+/* =========================================
+   BOTTOM BAR CAMERA
+
+   Camera is now INSIDE the bottom bar.
+========================================= */
+
+#camera-box {
+
+    position: absolute !important;
+
+    right: 20px !important;
+
+    top: 12px !important;
+
+    bottom: auto !important;
+
+    width: 220px !important;
+
+    height: 165px !important;
+
+    overflow: hidden;
+
+    border:
+        2px solid #00ff88;
+
+    border-radius: 12px;
+
+    z-index: 5100;
+
+    background: #111;
+
+    box-shadow:
+        0 0 20px rgba(0,255,136,0.15);
+}
+
+#camera-box img {
+
+    display: block !important;
+
+    width: 100% !important;
+
+    height: 100% !important;
+
+    max-width: none !important;
+
+    object-fit: cover;
+}
+
+/* =========================================
+   STATUS
+
+   Positioned inside bottom bar.
+========================================= */
+
+#status {
+
+    position: absolute;
+
+    left: 50%;
+
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    color: #666;
+
+    font-size: 13px;
+
+    letter-spacing: 1px;
+
+    z-index: 5100;
+
+    text-align: center;
+
+    min-width: 220px;
+}
+
+/* =========================================
+   GAME OVER
+========================================= */
+
+#gameOver {
+
+    position: fixed;
+
+    inset: 0;
+
+    background:
+        rgba(0,0,0,0.92);
+
+    display: none;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-direction: column;
+
+    z-index: 20000;
+}
+
+#gameOver.visible {
+
+    display: flex;
+}
+
+#gameOver h1 {
+
+    color: #ff4040;
+
+    font-size: 55px;
+
+    margin:
+        0 0 15px;
+}
+
+#finalScore {
+
+    color: #aaa;
+
+    font-size: 20px;
+}
+
+/* =========================================
+   MISS MESSAGE
+========================================= */
+
+#missMessage {
+
+    position: fixed;
+
+    left: 50%;
+
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    color: #ff4040;
+
+    font-size: 24px;
+
+    font-weight: bold;
+
+    letter-spacing: 2px;
+
+    opacity: 0;
+
+    pointer-events: none;
+
+    z-index: 7000;
+
+    transition:
+        opacity 0.1s;
+}
+
+#missMessage.visible {
+
+    opacity: 1;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- =========================================
+     TOP BAR
+========================================= -->
+
+<div id="topBar">
+
+    <div class="stat">
+
+        <div class="stat-label">
+            SCORE
+        </div>
+
+        <div
+            class="stat-value"
+            id="scoreValue">
+            0
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            MODE
+        </div>
+
+        <div
+            class="stat-value"
+            id="modeValue">
+            EASY
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            LIVES
+        </div>
+
+        <div
+            class="stat-value"
+            id="livesValue">
+            ❤️❤️❤️
+        </div>
+
+    </div>
+
+
+    <div class="stat">
+
+        <div class="stat-label">
+            AMMO
+        </div>
+
+        <div
+            class="stat-value"
+            id="ammoValue">
+            6 / 6
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     RELOAD NOTIFICATION
+========================================= -->
+
+<div id="reloadText">
+    ✌️ TWO FINGERS TO RELOAD
+</div>
+
+
+<!-- =========================================
+     GAME AREA
+========================================= -->
+
+<div id="gameArea"></div>
+
+
+<!-- =========================================
+     HIT FLASH
+========================================= -->
+
+<div id="hitFlash"></div>
+
+
+<!-- =========================================
+     MISS MESSAGE
+========================================= -->
+
+<div id="missMessage">
+    MISS — LIFE LOST
+</div>
+
+
+<!-- =========================================
+     CROSSHAIR
+========================================= -->
+
+<div
+    id="crosshair"
+    class="hand-lost">
+</div>
+
+
+<!-- =========================================
+     BOTTOM BAR
+========================================= -->
+
+<div id="bottomBar">
+
+
+    <!-- ESCAPE -->
+
+    <div id="escapeButton">
+        ESCAPE
+    </div>
+
+
+    <!-- STATUS -->
+
+    <div id="status">
+        READY
+    </div>
+
+
+    <!-- CAMERA -->
+
+    <div id="camera-box">
+
+        <img
+            src="/camera"
+            alt="Laptop Camera">
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     GAME OVER
+========================================= -->
+
+<div id="gameOver">
+
+    <h1>
+        GAME OVER
+    </h1>
+
+    <div id="finalScore">
+        SCORE: 0
+    </div>
+
+</div>
+
+
+<!-- GAME SOUNDS -->
+<audio id="gunshotSound" src="/static/gunshot.mp3" preload="auto"></audio>
+<audio id="reloadSound" src="/static/reloading.mp3" preload="auto"></audio>
+
+
+<script>
+
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const gameArea =
+    document.getElementById(
+        "gameArea"
+    );
+
+const crosshair =
+    document.getElementById(
+        "crosshair"
+    );
+
+const scoreValue =
+    document.getElementById(
+        "scoreValue"
+    );
+
+const modeValue =
+    document.getElementById(
+        "modeValue"
+    );
+
+const livesValue =
+    document.getElementById(
+        "livesValue"
+    );
+
+const ammoValue =
+    document.getElementById(
+        "ammoValue"
+    );
+
+const reloadText =
+    document.getElementById(
+        "reloadText"
+    );
+
+const hitFlash =
+    document.getElementById(
+        "hitFlash"
+    );
+
+const missMessage =
+    document.getElementById(
+        "missMessage"
+    );
+
+const escapeButton =
+    document.getElementById(
+        "escapeButton"
+    );
+
+const status =
+    document.getElementById(
+        "status"
+    );
+
+const gameOver =
+    document.getElementById(
+        "gameOver"
+    );
+
+const finalScore =
+    document.getElementById(
+        "finalScore"
+    );
+
+
+/* =========================================
+   GAME AUDIO
+========================================= */
+
+const gunshotSound =
+    document.getElementById("gunshotSound");
+
+const reloadSound =
+    document.getElementById("reloadSound");
+
+let audioUnlocked = false;
+
+/*
+   Browsers require a user interaction before
+   allowing page audio. Click once on the game
+   page to enable both sounds.
+*/
+
+function unlockAudio() {
+
+    if (audioUnlocked) return;
+
+    [gunshotSound, reloadSound].forEach(sound => {
+
+        sound.muted = true;
+
+        const promise = sound.play();
+
+        if (promise) {
+
+            promise.then(() => {
+
+                sound.pause();
+
+                sound.currentTime = 0;
+
+                sound.muted = false;
+
+            }).catch(() => {
+
+                sound.muted = false;
+
+            });
+
+        }
+
+    });
+
+    audioUnlocked = true;
+}
+
+document.addEventListener(
+    "pointerdown",
+    unlockAudio,
+    { once: true }
+);
+
+document.addEventListener(
+    "keydown",
+    unlockAudio,
+    { once: true }
+);
+
+function playSound(sound) {
+
+    if (!audioUnlocked) return;
+
+    sound.currentTime = 0;
+
+    sound.play().catch(() => {});
+
+}
+
+
+/* =========================================
+   GAME SETTINGS
+========================================= */
+
+const params =
+    new URLSearchParams(
+        window.location.search
+    );
+
+let difficulty =
+    params.get("difficulty");
+
+if (
+    difficulty !== "easy" &&
+    difficulty !== "normal" &&
+    difficulty !== "hard"
+) {
+
+    difficulty = "easy";
+}
+
+modeValue.textContent =
+    difficulty.toUpperCase();
+
+
+const settings = {
+
+    easy: {
+
+        startingTargets: 3,
+
+        maxTargets: 3,
+
+        targetLifetime: Infinity,
+
+        spawnDelay: 0,
+
+        ammo: 6
+    },
+
+
+    normal: {
+
+        startingTargets: 2,
+
+        maxTargets: 3,
+
+        targetLifetime: 4500,
+
+        spawnDelay: 350,
+
+        ammo: 6
+    },
+
+
+    hard: {
+
+        startingTargets: 2,
+
+        maxTargets: 4,
+
+        targetLifetime: 4000,
+
+        spawnDelay: 180,
+
+        ammo: 6
+    }
+
+};
+
+
+const setting =
+    settings[difficulty];
+
+
+/* =========================================
+   GAME VARIABLES
+========================================= */
+
+let score = 0;
+
+let lives = 3;
+
+let ammo =
+    setting.ammo;
+
+let maxAmmo =
+    setting.ammo;
+
+
+/*
+   Gesture state.
+
+   IMPORTANT:
+   fistStateInitialized prevents the
+   starting fist from shooting.
+*/
+
+let previousFist = false;
+
+let fistStateInitialized = false;
+
+let previousTwoFingers = false;
+
+let twoFingerStateInitialized = false;
+
+let requesting = false;
+
+let gameRunning = true;
+
+let reloading = false;
+
+
+/* =========================================
+   UPDATE UI
+========================================= */
+
+function updateUI() {
+
+    scoreValue.textContent =
+        score;
+
+    ammoValue.textContent =
+        ammo + " / " + maxAmmo;
+
+
+    let hearts = "";
+
+    for (
+        let i = 0;
+        i < lives;
+        i++
+    ) {
+
+        hearts += "❤️";
+    }
+
+
+    if (hearts === "") {
+
+        hearts = "0";
+    }
+
+
+    livesValue.textContent =
+        hearts;
+}
+
+
+/* =========================================
+   CREATE TARGET
+========================================= */
+
+function createTarget() {
+
+    if (!gameRunning) return;
+
+
+    const existing =
+        document.querySelectorAll(
+            ".target"
+        );
+
+
+    if (
+        existing.length >=
+        setting.maxTargets
+    ) {
+
+        return;
+    }
+
+
+    const target =
+        document.createElement(
+            "div"
+        );
+
+    target.className =
+        "target";
+
+
+    const areaWidth =
+        gameArea.clientWidth;
+
+    const areaHeight =
+        gameArea.clientHeight;
+
+
+    const padding = 55;
+
+
+    let x;
+    let y;
+
+    let valid = false;
+
+    let attempts = 0;
+
+
+    while (
+        !valid &&
+        attempts < 100
+    ) {
+
+        attempts++;
+
+
+        x =
+            padding +
+            Math.random() *
+            (areaWidth - padding * 2);
+
+
+        y =
+            padding +
+            Math.random() *
+            (areaHeight - padding * 2);
+
+
+        valid = true;
+
+
+        existing.forEach(
+            other => {
+
+                const ox =
+                    parseFloat(
+                        other.style.left
+                    );
+
+                const oy =
+                    parseFloat(
+                        other.style.top
+                    );
+
+
+                const distance =
+                    Math.sqrt(
+                        (x - ox) ** 2 +
+                        (y - oy) ** 2
+                    );
+
+
+                if (
+                    distance < 100
+                ) {
+
+                    valid = false;
+                }
+
+            }
+        );
+
+    }
+
+
+    target.style.left =
+        x + "px";
+
+    target.style.top =
+        y + "px";
+
+
+    gameArea.appendChild(
+        target
+    );
+
+
+    if (
+        setting.targetLifetime !==
+        Infinity
+    ) {
+
+        setTimeout(
+            () => {
+
+                if (
+                    target.parentElement
+                ) {
+
+                    target.remove();
+
+
+                    if (
+                        gameRunning
+                    ) {
+
+                        setTimeout(
+                            createTarget,
+                            setting.spawnDelay
+                        );
+                    }
+
+                }
+
+            },
+            setting.targetLifetime
+        );
+
+    }
+
+}
+
+
+/* =========================================
+   INITIAL TARGETS
+========================================= */
+
+function startTargets() {
+
+    for (
+        let i = 0;
+        i < setting.startingTargets;
+        i++
+    ) {
+
+        setTimeout(
+            createTarget,
+            i * 150
+        );
+    }
+
+}
+
+startTargets();
+
+
+/* =========================================
+   HIT TARGET
+========================================= */
+
+function hitTarget(target) {
+
+    if (!gameRunning) return;
+
+    if (reloading) return;
+
+
+    ammo--;
+
+    score++;
+
+
+    target.remove();
+
+
+    updateUI();
+
+
+    /* Hit flash */
+
+    hitFlash.style.opacity =
+        "1";
+
+
+    setTimeout(
+        () => {
+
+            hitFlash.style.opacity =
+                "0";
+
+        },
+        80
+    );
+
+
+    /* Replacement */
+
+    setTimeout(
+        createTarget,
+        setting.spawnDelay
+    );
+
+
+    /* Ammo empty */
+
+    if (
+        ammo <= 0
+    ) {
+
+        showReloadMessage();
+    }
+
+}
+
+
+/* =========================================
+   CHECK HIT
+========================================= */
+
+function checkHit() {
+
+    if (!gameRunning) return;
+
+    if (reloading) return;
+
+
+    /*
+       No ammo = reload required.
+    */
+
+    if (ammo <= 0) {
+
+        showReloadMessage();
+
+        return;
+    }
+
+
+    /*
+       Every actual fist press consumes
+       one ammo.
+    */
+
+    ammo--;
+
+    playSound(gunshotSound);
+
+    updateUI();
+
+
+    const crossRect =
+        crosshair.getBoundingClientRect();
+
+
+    const cx =
+        crossRect.left +
+        crossRect.width / 2;
+
+
+    const cy =
+        crossRect.top +
+        crossRect.height / 2;
+
+
+    const targets =
+        document.querySelectorAll(
+            ".target"
+        );
+
+
+    let hit = false;
+
+
+    for (
+        const target of targets
+    ) {
+
+        const rect =
+            target.getBoundingClientRect();
+
+
+        const tx =
+            rect.left +
+            rect.width / 2;
+
+
+        const ty =
+            rect.top +
+            rect.height / 2;
+
+
+        const distance =
+            Math.sqrt(
+                (cx - tx) ** 2 +
+                (cy - ty) ** 2
+            );
+
+
+        /*
+           40 pixel hit radius.
+        */
+
+        if (
+            distance < 40
+        ) {
+
+            hit = true;
+
+            score++;
+
+
+            target.remove();
+
+
+            updateUI();
+
+
+            hitFlash.style.opacity =
+                "1";
+
+
+            setTimeout(
+                () => {
+
+                    hitFlash.style.opacity =
+                        "0";
+
+                },
+                80
+            );
+
+
+            setTimeout(
+                createTarget,
+                setting.spawnDelay
+            );
+
+
+            break;
+        }
+
+    }
+
+
+    /*
+       NO TARGET HIT
+
+       Lose one life.
+    */
+
+    if (!hit) {
+
+        loseLife();
+
+
+        if (gameRunning) {
+
+            status.textContent =
+                "MISS — LIFE LOST";
+
+
+            missMessage.classList.add(
+                "visible"
+            );
+
+
+            setTimeout(
+                () => {
+
+                    missMessage.classList.remove(
+                        "visible"
+                    );
+
+                },
+                400
+            );
+
+
+            hitFlash.style.opacity =
+                "1";
+
+
+            setTimeout(
+                () => {
+
+                    hitFlash.style.opacity =
+                        "0";
+
+                },
+                120
+            );
+
+        }
+
+    }
+
+
+    /*
+       Ammo empty.
+    */
+
+    if (
+        ammo <= 0 &&
+        gameRunning
+    ) {
+
+        showReloadMessage();
+    }
+
+}
+
+
+/* =========================================
+   RELOAD MESSAGE
+========================================= */
+
+function showReloadMessage() {
+
+    reloadText.textContent =
+        "✌️ TWO FINGERS TO RELOAD";
+
+
+    reloadText.classList.add(
+        "visible"
+    );
+
+
+    status.textContent =
+        "RELOAD REQUIRED";
+}
+
+
+/* =========================================
+   RELOAD
+========================================= */
+
+function reload() {
+
+    if (!gameRunning) return;
+
+    if (reloading) return;
+
+
+    /*
+       Don't reload if already full.
+    */
+
+    if (
+        ammo >= maxAmmo
+    ) {
+
+        status.textContent =
+            "AMMO FULL";
+
+        return;
+    }
+
+
+    reloading = true;
+
+    playSound(reloadSound);
+
+
+    reloadText.textContent =
+        "RELOADING...";
+
+
+    reloadText.classList.add(
+        "visible"
+    );
+
+
+    status.textContent =
+        "RELOADING";
+
+
+    setTimeout(
+        () => {
+
+            if (!gameRunning) {
+                return;
+            }
+
+
+            ammo = maxAmmo;
+
+
+            reloading = false;
+
+
+            reloadText.classList.remove(
+                "visible"
+            );
+
+
+            status.textContent =
+                "READY";
+
+
+            updateUI();
+
+        },
+        900
+    );
+
+}
+
+
+/* =========================================
+   LOSE LIFE
+========================================= */
+
+function loseLife() {
+
+    lives--;
+
+    updateUI();
+
+
+    if (
+        lives <= 0
+    ) {
+
+        endGame();
+    }
+
+}
+
+
+/* =========================================
+   END GAME
+========================================= */
+
+function endGame() {
+
+    gameRunning = false;
+
+
+    /*
+       Immediately return to the main menu.
+    */
+
+    window.location.href =
+        "/";
+
+}
+
+
+/* =========================================
+   ESCAPE
+========================================= */
+
+function escapeGame() {
+
+    gameRunning = false;
+
+
+    window.location.href =
+        "/";
+
+}
+
+
+/* =========================================
+   HAND CONTROL
+========================================= */
+
+async function updateHand() {
+
+    if (requesting) return;
+
+    requesting = true;
+
+
+    try {
+
+        const response =
+            await fetch(
+                "/hand",
+                {
+                    cache: "no-store"
+                }
+            );
+
+
+        const data =
+            await response.json();
+
+
+        /* =================================
+           HAND DETECTION
+        ================================= */
+
+        if (
+            data.hand_detected
+        ) {
+
+            crosshair.classList.add(
+                "hand-found"
+            );
+
+            crosshair.classList.remove(
+                "hand-lost"
+            );
+
+
+            /*
+               Move crosshair.
+            */
+
+            crosshair.style.left =
+                (
+                    data.x *
+                    window.innerWidth
+                ) + "px";
+
+
+            crosshair.style.top =
+                (
+                    data.y *
+                    window.innerHeight
+                ) + "px";
+
+
+            status.textContent =
+                data.gesture;
+
+        }
+        else {
+
+            crosshair.classList.add(
+                "hand-lost"
+            );
+
+            crosshair.classList.remove(
+                "hand-found"
+            );
+
+
+            if (!reloading) {
+
+                status.textContent =
+                    "NO HAND";
+            }
+
+        }
+
+
+        /* =================================
+           CURRENT CROSSHAIR POSITION
+        ================================= */
+
+        const x =
+            parseFloat(
+                crosshair.style.left
+            );
+
+
+        const y =
+            parseFloat(
+                crosshair.style.top
+            );
+
+
+        const element =
+            document.elementFromPoint(
+                x,
+                y
+            );
+
+
+        /* =================================
+           ESCAPE HOVER
+        ================================= */
+
+        escapeButton.classList.remove(
+            "hovered"
+        );
+
+
+        let onEscapeButton =
+            false;
+
+
+        if (
+            element &&
+            element.closest(
+                "#escapeButton"
+            )
+        ) {
+
+            escapeButton.classList.add(
+                "hovered"
+            );
+
+
+            onEscapeButton =
+                true;
+        }
+
+
+        /* =================================
+           FIST DETECTION
+        ================================= */
+
+        const fist =
+            data.gesture === "FIST";
+
+
+        /*
+           Synchronize the initial fist.
+
+           If the player starts with a fist,
+           it will NOT trigger a shot.
+        */
+
+        if (
+            !fistStateInitialized
+        ) {
+
+            previousFist =
+                fist;
+
+            fistStateInitialized =
+                true;
+
+        }
+        else {
+
+            const fistPressed =
+                fist &&
+                !previousFist &&
+                data.hand_detected;
+
+
+            if (
+                fistPressed
+            ) {
+
+                /*
+                   ESCAPE gets priority.
+                */
+
+                if (
+                    onEscapeButton
+                ) {
+
+                    escapeGame();
+
+                    return;
+                }
+
+
+                /*
+                   Otherwise shoot.
+                */
+
+                checkHit();
+            }
+
+
+            previousFist =
+                fist;
+        }
+
+
+        /* =================================
+           TWO FINGER RELOAD
+        ================================= */
+
+        const twoFingers =
+            data.gesture ===
+            "TWO FINGERS";
+
+
+        /*
+           Synchronize initial state.
+        */
+
+        if (
+            !twoFingerStateInitialized
+        ) {
+
+            previousTwoFingers =
+                twoFingers;
+
+            twoFingerStateInitialized =
+                true;
+
+        }
+        else {
+
+            const twoFingerPressed =
+                twoFingers &&
+                !previousTwoFingers &&
+                data.hand_detected;
+
+
+            if (
+                twoFingerPressed
+            ) {
+
+                reload();
+            }
+
+
+            previousTwoFingers =
+                twoFingers;
+        }
+
+    }
+
+    catch (error) {
+
+        status.textContent =
+            "CONNECTION ERROR";
+
+    }
+
+    finally {
+
+        requesting = false;
+
+    }
+
+}
+
+
+/* =========================================
+   INITIAL UI
+========================================= */
+
+updateUI();
+
+
+/* =========================================
+   HAND POLLING
+========================================= */
+
+setInterval(
+    updateHand,
+    30
+);
+
+</script>
+
+</body>
+
+</html>

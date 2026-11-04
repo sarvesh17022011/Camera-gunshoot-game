@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>Target Gesture</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #050505;
+    color: white;
+}
+
+body {
+    background:
+        radial-gradient(
+            circle at center,
+            #10251c 0%,
+            #050505 55%
+        );
+}
+
+/* =========================================
+   MAIN MENU
+========================================= */
+
+.menu {
+    position: absolute;
+
+    left: 50%;
+    top: 50%;
+
+    transform: translate(-50%, -50%);
+
+    width: min(700px, 90vw);
+
+    text-align: center;
+
+    z-index: 10;
+}
+
+.title {
+    font-size: clamp(42px, 7vw, 80px);
+
+    font-weight: 900;
+
+    letter-spacing: 8px;
+
+    color: #00ff88;
+
+    text-shadow:
+        0 0 10px #00ff88,
+        0 0 30px rgba(0,255,136,0.4);
+
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #aaa;
+
+    font-size: 18px;
+
+    margin-bottom: 45px;
+}
+
+/* =========================================
+   DIFFICULTY
+========================================= */
+
+.difficulty-title {
+    color: #777;
+
+    font-size: 13px;
+
+    letter-spacing: 3px;
+
+    margin-bottom: 15px;
+}
+
+.difficulty-container {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 15px;
+
+    margin-bottom: 35px;
+}
+
+.difficulty {
+    width: 150px;
+
+    padding: 16px 10px;
+
+    border: 2px solid #333;
+
+    border-radius: 10px;
+
+    background: #101010;
+
+    color: #aaa;
+
+    font-weight: bold;
+
+    cursor: default;
+
+    transition: 0.15s;
+}
+
+.difficulty.selected {
+    border-color: #00ff88;
+
+    color: #00ff88;
+
+    background: #082016;
+
+    box-shadow:
+        0 0 15px rgba(0,255,136,0.3);
+}
+
+.difficulty.hovered {
+    transform: scale(1.04);
+
+    border-color: #00ff88;
+
+    color: #00ff88;
+}
+
+/* =========================================
+   START BUTTON
+========================================= */
+
+#startButton {
+    display: inline-block;
+
+    padding: 18px 60px;
+
+    border: 2px solid #00ff88;
+
+    border-radius: 12px;
+
+    background: #07150f;
+
+    color: #00ff88;
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    letter-spacing: 2px;
+
+    transition: 0.15s;
+}
+
+#startButton.hovered {
+    background: #00ff88;
+
+    color: #001b0e;
+
+    box-shadow:
+        0 0 25px rgba(0,255,136,0.5);
+
+    transform: scale(1.04);
+}
+
+/* =========================================
+   CROSSHAIR
+========================================= */
+
+#crosshair {
+    position: fixed;
+
+    width: 42px;
+    height: 42px;
+
+    border: 3px solid #ff3030;
+
+    border-radius: 50%;
+
+    transform: translate(-50%, -50%);
+
+    pointer-events: none;
+
+    z-index: 99990;
+
+    display: block !important;
+
+    transition:
+        border-color 0.12s ease,
+        box-shadow 0.12s ease;
+}
+
+#crosshair::after {
+    content: "";
+
+    position: absolute;
+
+    width: 7px;
+    height: 7px;
+
+    left: 50%;
+    top: 50%;
+
+    transform:
+        translate(-50%, -50%);
+
+    border-radius: 50%;
+
+    background: #ff3030;
+}
+
+#crosshair.hand-found {
+    border-color: #00ff88;
+
+    box-shadow:
+        0 0 8px #00ff88,
+        0 0 18px #00ff88;
+}
+
+#crosshair.hand-found::after {
+    background: #00ff88;
+}
+
+#crosshair.hand-lost {
+    border-color: #ff3030;
+
+    box-shadow:
+        0 0 8px #ff3030,
+        0 0 18px #ff3030;
+}
+
+#crosshair.hand-lost::after {
+    background: #ff3030;
+}
+
+/* =========================================
+   STATUS
+========================================= */
+
+#status {
+    position: fixed;
+
+    top: 20px;
+    left: 20px;
+
+    color: #777;
+
+    font-size: 12px;
+
+    z-index: 100;
+}
+
+/* =========================================
+   CAMERA
+========================================= */
+
+#camera-box {
+    position: fixed !important;
+
+    right: 20px !important;
+    bottom: 20px !important;
+
+    width: 220px !important;
+    height: 165px !important;
+
+    overflow: hidden;
+
+    border: 2px solid #00ff88;
+
+    border-radius: 12px;
+
+    z-index: 99999;
+
+    background: #111;
+
+    box-shadow:
+        0 0 20px rgba(0,255,136,0.15);
+}
+
+#camera-box img {
+    display: block !important;
+
+    width: 100% !important;
+    height: 100% !important;
+
+    max-width: none !important;
+
+    object-fit: cover;
+}
+
+/* =========================================
+   INSTRUCTIONS
+========================================= */
+
+.instructions {
+    margin-top: 35px;
+
+    color: #666;
+
+    font-size: 13px;
+
+    line-height: 1.8;
+}
+
+.instructions span {
+    color: #aaa;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="status">
+    SYSTEM READY
+</div>
+
+<div class="menu">
+
+    <div class="title">
+        TARGET GESTURE
+    </div>
+
+    <div class="subtitle">
+        Control the game using your hand
+    </div>
+
+    <div class="difficulty-title">
+        SELECT DIFFICULTY
+    </div>
+
+    <div class="difficulty-container">
+
+        <div
+            class="difficulty selected"
+            id="easy"
+            data-difficulty="easy">
+            EASY
+        </div>
+
+        <div
+            class="difficulty"
+            id="normal"
+            data-difficulty="normal">
+            NORMAL
+        </div>
+
+        <div
+            class="difficulty"
+            id="hard"
+            data-difficulty="hard">
+            HARD
+        </div>
+
+    </div>
+
+    <div id="startButton">
+        START GAME
+    </div>
+
+    <div class="instructions">
+
+        <div>
+            <span>OPEN PALM</span> — Move
+        </div>
+
+        <div>
+            <span>FIST</span> — Select / Shoot
+        </div>
+
+        <div>
+            <span>TWO FINGERS</span> — Reload
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Permanent crosshair -->
+
+<div
+    id="crosshair"
+    class="hand-lost">
+</div>
+
+<!-- Camera -->
+
+<div id="camera-box">
+
+    <img
+        src="/camera"
+        alt="Laptop Camera">
+
+</div>
+
+<script>
+
+const crosshair =
+    document.getElementById("crosshair");
+
+const status =
+    document.getElementById("status");
+
+const startButton =
+    document.getElementById("startButton");
+
+const difficultyButtons =
+    document.querySelectorAll(".difficulty");
+
+
+let currentDifficulty = "easy";
+
+let previousFist = false;
+
+let fistStateInitialized = false;
+
+let requesting = false;
+
+
+/* =========================================
+   DIFFICULTY
+========================================= */
+
+difficultyButtons.forEach(button => {
+
+    button.addEventListener(
+        "mouseenter",
+        () => {
+
+            button.classList.add(
+                "hovered"
+            );
+
+        }
+    );
+
+    button.addEventListener(
+        "mouseleave",
+        () => {
+
+            button.classList.remove(
+                "hovered"
+            );
+
+        }
+    );
+
+});
+
+
+/* =========================================
+   HAND UPDATE
+========================================= */
+
+async function updateHand() {
+
+    if (requesting) return;
+
+    requesting = true;
+
+    try {
+
+        const response =
+            await fetch(
+                "/hand",
+                {
+                    cache: "no-store"
+                }
+            );
+
+        const data =
+            await response.json();
+
+
+        /* =================================
+           HAND DETECTION
+        ================================= */
+
+        if (data.hand_detected) {
+
+            crosshair.classList.add(
+                "hand-found"
+            );
+
+            crosshair.classList.remove(
+                "hand-lost"
+            );
+
+            crosshair.style.left =
+                (data.x * window.innerWidth) +
+                "px";
+
+            crosshair.style.top =
+                (data.y * window.innerHeight) +
+                "px";
+
+            status.textContent =
+                data.gesture;
+
+        }
+        else {
+
+            crosshair.classList.add(
+                "hand-lost"
+            );
+
+            crosshair.classList.remove(
+                "hand-found"
+            );
+
+            status.textContent =
+                "NO HAND";
+        }
+
+
+        /* =================================
+           FIND ELEMENT
+        ================================= */
+
+        crosshair.style.pointerEvents =
+            "none";
+
+        const x =
+            parseFloat(
+                crosshair.style.left
+            );
+
+        const y =
+            parseFloat(
+                crosshair.style.top
+            );
+
+        const element =
+            document.elementFromPoint(
+                x,
+                y
+            );
+
+
+        /* =================================
+           HIGHLIGHT DIFFICULTY
+        ================================= */
+
+        difficultyButtons.forEach(button => {
+
+            button.classList.remove(
+                "hovered"
+            );
+
+        });
+
+        let hoveredDifficulty = null;
+
+        if (element) {
+
+            const button =
+                element.closest(
+                    ".difficulty"
+                );
+
+            if (button) {
+
+                button.classList.add(
+                    "hovered"
+                );
+
+                hoveredDifficulty =
+                    button;
+            }
+        }
+
+
+        /* =================================
+           FIST
+        ================================= */
+
+        const fist =
+            data.gesture === "FIST";
+
+
+        /*
+           IMPORTANT:
+
+           The first valid hand gesture only
+           establishes the starting state.
+
+           Therefore if the user starts with
+           a closed fist, it does NOT select
+           anything immediately.
+        */
+
+        if (!fistStateInitialized) {
+
+            previousFist = fist;
+
+            fistStateInitialized = true;
+
+        }
+        else {
+
+            const fistPressed =
+                fist &&
+                !previousFist &&
+                data.hand_detected;
+
+
+            if (fistPressed) {
+
+                if (hoveredDifficulty) {
+
+                    currentDifficulty =
+                        hoveredDifficulty
+                            .dataset
+                            .difficulty;
+
+                    difficultyButtons.forEach(
+                        button => {
+
+                            button.classList.remove(
+                                "selected"
+                            );
+
+                        }
+                    );
+
+                    hoveredDifficulty.classList.add(
+                        "selected"
+                    );
+
+                }
+
+
+                if (
+                    element &&
+                    element.closest(
+                        "#startButton"
+                    )
+                ) {
+
+                    window.location.href =
+                        "/game.html?difficulty=" +
+                        encodeURIComponent(
+                            currentDifficulty
+                        );
+                }
+            }
+
+            previousFist = fist;
+        }
+
+    }
+
+    catch (error) {
+
+        status.textContent =
+            "CONNECTION ERROR";
+
+    }
+
+    finally {
+
+        requesting = false;
+
+    }
+
+}
+
+
+/* =========================================
+   START
+========================================= */
+
+setInterval(
+    updateHand,
+    30
+);
+
+</script>
+
+</body>
+
+</html>
